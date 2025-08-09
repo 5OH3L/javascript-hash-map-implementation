@@ -1,8 +1,7 @@
-const HashMapPrototype = {
-  Node(key, value) {
+const HashSetPrototype = {
+  Node(key) {
     return {
       key,
-      value,
       nextNode: null,
     };
   },
@@ -17,22 +16,19 @@ const HashMapPrototype = {
 
     return hashCode;
   },
-  set(key, value) {
+  add(key) {
     if (typeof key !== "string") throw new Error("The key must be a string");
     const hashedKey = this.hash(key);
     if (hashedKey < 0 || hashedKey >= this.capacity) throw new Error("Trying to access index out of bounds");
     let currentNode = this.buckets[hashedKey];
     let lastNode = null;
     while (currentNode) {
-      if (currentNode.key === key) {
-        currentNode.value = value;
-        return;
-      }
+      if (currentNode.key === key) return false;
       lastNode = currentNode;
       currentNode = currentNode.nextNode;
     }
 
-    const node = this.Node(key, value);
+    const node = this.Node(key);
     if (!lastNode) {
       this.buckets[hashedKey] = node;
     } else {
@@ -40,7 +36,7 @@ const HashMapPrototype = {
     }
     this.entryCount++;
 
-    if (this.entryCount <= Math.floor(this.capacity * this.loadFactor)) return;
+    if (this.entryCount <= Math.floor(this.capacity * this.loadFactor)) return true;
 
     this.capacity *= 2;
     const newBuckets = new Array(this.capacity).fill(null);
@@ -62,18 +58,7 @@ const HashMapPrototype = {
       }
     }
     this.buckets = newBuckets;
-  },
-  get(key) {
-    if (typeof key !== "string") throw new Error("The key must be a string");
-    const hashedKey = this.hash(key);
-    let currentNode = this.buckets[hashedKey];
-    if (!currentNode) return null;
-
-    while (currentNode) {
-      if (currentNode.key === key) return currentNode.value;
-      currentNode = currentNode.nextNode;
-    }
-    return null;
+    return true;
   },
   has(key) {
     if (typeof key !== "string") throw new Error("The key must be a string");
@@ -111,55 +96,34 @@ const HashMapPrototype = {
     }
     return false;
   },
-  get length() {
+  get size() {
     return this.entryCount;
   },
   clear() {
     this.buckets = new Array(this.capacity).fill(null);
     this.entryCount = 0;
   },
-  getAllNodes() {
-    const allNodes = [];
+  get keys() {
+    const allKeys = [];
     const buckets = this.buckets;
     for (let i = 0; i < this.capacity; i++) {
       if (buckets[i] === null) continue;
       let currentNode = buckets[i];
       while (currentNode) {
-        allNodes.push(currentNode);
+        allKeys.push(currentNode.key);
         currentNode = currentNode.nextNode;
       }
     }
-    return allNodes;
-  },
-  get keys() {
-    const allKeys = [];
-    for (const node of this.getAllNodes()) {
-      allKeys.push(node.key);
-    }
     return allKeys;
-  },
-  get values() {
-    const allValues = [];
-    for (const node of this.getAllNodes()) {
-      allValues.push(node.value);
-    }
-    return allValues;
-  },
-  get entries() {
-    const allEntries = [];
-    for (const node of this.getAllNodes()) {
-      allEntries.push([node.key, node.value]);
-    }
-    return allEntries;
   },
 };
 
-function HashMap(capacity = 16, loadFactor = 0.75) {
-  const HashMap = Object.create(HashMapPrototype);
-  HashMap.capacity = capacity;
-  HashMap.loadFactor = loadFactor;
-  HashMap.entryCount = 0;
-  HashMap.buckets = new Array(capacity).fill(null);
-  return HashMap;
+function HashSet(capacity = 16, loadFactor = 0.75) {
+  const HashSet = Object.create(HashSetPrototype);
+  HashSet.capacity = capacity;
+  HashSet.loadFactor = loadFactor;
+  HashSet.entryCount = 0;
+  HashSet.buckets = new Array(capacity).fill(null);
+  return HashSet;
 }
-export default HashMap;
+export default HashSet;
